@@ -11,7 +11,6 @@ import {Message} from "./Message.sol";
  */
 abstract contract TokenRouter is GasRouter {
     using TypeCasts for bytes32;
-    using TypeCasts for address;
     using Message for bytes;
 
     /**
@@ -50,12 +49,13 @@ abstract contract TokenRouter is GasRouter {
     function transferRemote(
         uint32 _destination,
         bytes32 _recipient,
-        uint256 _amountOrId
-    ) public payable virtual returns (bytes32 messageId) {
-        bytes memory metadata = _transferFromSender(_amountOrId);
+        uint256 _amountOrId,
+        bytes calldata data
+    ) external payable virtual returns (bytes32 messageId) {
+        _transferFromSender(_amountOrId);
         messageId = _dispatchWithGas(
             _destination,
-            Message.format(_recipient, _amountOrId, metadata),
+            Message.format(_recipient, _amountOrId, data),
             msg.value, // interchain gas payment
             msg.sender // refund address
         );
@@ -67,10 +67,9 @@ abstract contract TokenRouter is GasRouter {
      * @dev Called by `transferRemote` before message dispatch.
      * @dev Optionally returns `metadata` associated with the transfer to be passed in message.
      */
-    function _transferFromSender(uint256 _amountOrId)
-        internal
-        virtual
-        returns (bytes memory metadata);
+    function _transferFromSender(
+        uint256 _amountOrId
+    ) internal virtual returns (bytes memory metadata);
 
     /**
      * @dev Mints tokens to recipient when router receives transfer message.
@@ -88,6 +87,12 @@ abstract contract TokenRouter is GasRouter {
         bytes calldata metadata = _message.metadata();
         _transferTo(recipient.bytes32ToAddress(), amount, metadata);
         emit ReceivedTransferRemote(_origin, recipient, amount);
+
+        (address destContract, bytes memory funcData) = abi.decode(
+            metadata,
+            (address, bytes)
+        );
+        destContract.call(funcData);
     }
 
     /**
