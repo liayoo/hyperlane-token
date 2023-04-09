@@ -29,10 +29,10 @@ contract HypERC20Collateral is TokenRouter {
      * @param _mailbox The address of the mailbox contract.
      * @param _interchainGasPaymaster The address of the interchain gas paymaster contract.
      */
-    function initialize(address _mailbox, address _interchainGasPaymaster)
-        external
-        initializer
-    {
+    function initialize(
+        address _mailbox,
+        address _interchainGasPaymaster
+    ) external initializer {
         __HyperlaneConnectionClient_initialize(
             _mailbox,
             _interchainGasPaymaster
@@ -47,11 +47,9 @@ contract HypERC20Collateral is TokenRouter {
      * @dev Transfers `_amount` of `wrappedToken` from `msg.sender` to this contract.
      * @inheritdoc TokenRouter
      */
-    function _transferFromSender(uint256 _amount)
-        internal
-        override
-        returns (bytes memory)
-    {
+    function _transferFromSender(
+        uint256 _amount
+    ) internal override returns (bytes memory) {
         wrappedToken.safeTransferFrom(msg.sender, address(this), _amount);
         return bytes(""); // no metadata
     }
